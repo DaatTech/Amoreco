@@ -652,6 +652,10 @@
         <option value="JESSÉ DE JESUS VIEIRA">
       </datalist>
     </div>
+    <div class="field-group">
+      <label for="valor-ajudante">Valor do Ajudante (R$)</label>
+      <input type="number" id="valor-ajudante" placeholder="0,00" min="0" step="0.01">
+    </div>
   </div>
   <div class="grid-2" style="margin-bottom:24px">
     <div class="field-group">
@@ -716,6 +720,10 @@
       <div class="custos-linha" id="linha-ajudante" style="display:none">
         <span class="custos-label">Ajudante</span>
         <span class="custos-val" id="res-ajudante">—</span>
+      </div>
+      <div class="custos-linha" id="linha-valor-ajudante" style="display:none">
+        <span class="custos-label">Valor do Ajudante</span>
+        <span class="custos-val" id="res-valor-ajudante">R$ 0,00</span>
       </div>
       <div class="custos-linha" id="linha-adicional" style="display:none">
         <span class="custos-label" id="res-motivo-adicional">Valor Adicional</span>
@@ -925,6 +933,7 @@ function calcularFrete() {
   const pedagio = parseFloat(document.getElementById('pedagio').value) || 0;
   const valorMotorista = parseFloat(document.getElementById('valor-motorista').value) || 0;
   const nomeAjudante = document.getElementById('nome-ajudante').value.trim();
+  const valorAjudante = parseFloat(document.getElementById('valor-ajudante').value) || 0;
   const valorAdicional = parseFloat(document.getElementById('valor-adicional').value) || 0;
   const motivoAdicional = document.getElementById('motivo-adicional').value.trim();
   const observacoes = document.getElementById('observacoes').value.trim();
@@ -963,11 +972,18 @@ function calcularFrete() {
   document.getElementById('res-valor-motorista').textContent = valorMotorista ? `R$ ${valorMotorista.toLocaleString('pt-BR', {minimumFractionDigits:2})}` : 'R$ 0,00';
 
   const linhaAjudante = document.getElementById('linha-ajudante');
+  const linhaValorAjudante = document.getElementById('linha-valor-ajudante');
   if (nomeAjudante) {
     linhaAjudante.style.display = 'flex';
     document.getElementById('res-ajudante').textContent = nomeAjudante;
   } else {
     linhaAjudante.style.display = 'none';
+  }
+  if (valorAjudante > 0) {
+    linhaValorAjudante.style.display = 'flex';
+    document.getElementById('res-valor-ajudante').textContent = `R$ ${valorAjudante.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+  } else {
+    linhaValorAjudante.style.display = 'none';
   }
 
   const linhaAdicional = document.getElementById('linha-adicional');
@@ -979,7 +995,7 @@ function calcularFrete() {
     linhaAdicional.style.display = 'none';
   }
 
-  const totalCustos = combustivel + pedagio + valorMotorista + valorAdicional;
+  const totalCustos = combustivel + pedagio + valorMotorista + valorAjudante + valorAdicional;
   document.getElementById('res-total-custos').textContent = `R$ ${totalCustos.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
   // Lucro do dia
@@ -1036,16 +1052,17 @@ function calcularFrete() {
     pedagio,
     valorMotorista,
     nomeAjudante,
+    valorAjudante,
     valorAdicional,
     motivoAdicional,
     observacoes,
-    totalCustos: combustivel + pedagio + valorMotorista + valorAdicional,
-    lucro: valor - (combustivel + pedagio + valorMotorista + valorAdicional)
+    totalCustos: combustivel + pedagio + valorMotorista + valorAjudante + valorAdicional,
+    lucro: valor - (combustivel + pedagio + valorMotorista + valorAjudante + valorAdicional)
   };
 }
 
 function limparForm() {
-  ['motorista','placa','modelo','km','num-carga','combustivel','pedagio','valor-motorista','nome-ajudante','valor-adicional','motivo-adicional','observacoes','peso','data'].forEach(id => {
+  ['motorista','placa','modelo','km','num-carga','combustivel','pedagio','valor-motorista','nome-ajudante','valor-ajudante','valor-adicional','motivo-adicional','observacoes','peso','data'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('rota').value = '';
@@ -1061,15 +1078,10 @@ function limparForm() {
 // INTEGRAÇÃO GOOGLE SHEETS
 // =============================================
 // Cole aqui a URL do seu Web App do Google Apps Script:
-const SCRIPT_URL = 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwJn3WqQLGWGYM__cFV7riXWK6bLnp4mRbgGF-IKJ5uonw9P-n8OWmuc2vkcMid2vUf/exec';
 
 async function enviarParaSheets() {
   if (!window._dadosParaEnviar) return;
-
-  if (SCRIPT_URL === 'COLE_AQUI_A_URL_DO_SEU_APPS_SCRIPT') {
-    mostrarStatus('erro', '⚠️ Configure a URL do Apps Script no código do formulário.');
-    return;
-  }
 
   const btn = document.getElementById('btn-enviar');
   btn.disabled = true;
@@ -1093,6 +1105,7 @@ async function enviarParaSheets() {
     pedagio:         d.pedagio,
     valorMotorista:  d.valorMotorista,
     nomeAjudante:    d.nomeAjudante,
+    valorAjudante:   d.valorAjudante,
     valorAdicional:  d.valorAdicional,
     motivoAdicional: d.motivoAdicional,
     observacoes:     d.observacoes,
