@@ -533,7 +533,15 @@
   <div class="grid-2" style="margin-bottom:24px">
     <div class="field-group">
       <label for="motorista">Nome do Motorista</label>
-      <input type="text" id="motorista" placeholder="Nome completo">
+      <input type="text" id="motorista" placeholder="Selecione ou digite o nome" list="lista-motoristas" autocomplete="off">
+      <datalist id="lista-motoristas">
+        <option value="ROBERTO PEREZ MARQUES DA SILVA">
+        <option value="PAULO ROGERIO DE SOUZA BENTO">
+        <option value="CLAYTON OLIVEIRA DE JESUS">
+        <option value="ALEXANDER JUNIOR HENRIQUE">
+        <option value="GABRIEL IREU BRAZÃO MOREIRA">
+        <option value="JESSÉ DE JESUS VIEIRA">
+      </datalist>
     </div>
     <div class="field-group">
       <label for="data">Data</label>
@@ -546,17 +554,27 @@
   <div class="grid-2" style="margin-bottom:16px">
     <div class="field-group">
       <label for="placa">Placa</label>
-      <input type="text" id="placa" placeholder="ABC-1234" maxlength="8" style="text-transform:uppercase">
+      <input type="text" id="placa" placeholder="Selecione ou digite a placa" maxlength="10"
+             list="lista-placas" autocomplete="off" style="text-transform:uppercase"
+             oninput="this.value=this.value.toUpperCase(); preencherModeloPorPlaca(this.value);"
+             onchange="preencherModeloPorPlaca(this.value)">
+      <datalist id="lista-placas"></datalist>
     </div>
     <div class="field-group">
       <label for="modelo">Modelo</label>
-      <input type="text" id="modelo" placeholder="Ex: Fiat Fiorino">
+      <input type="text" id="modelo" placeholder="Selecione ou digite o modelo"
+             list="lista-modelos" autocomplete="off">
+      <datalist id="lista-modelos"></datalist>
     </div>
   </div>
   <div class="grid-2" style="margin-bottom:24px">
     <div class="field-group">
       <label for="km">Km Percorrida</label>
       <input type="number" id="km" placeholder="0" min="0">
+    </div>
+    <div class="field-group">
+      <label for="num-carga">Número da Carga</label>
+      <input type="text" id="num-carga" placeholder="Ex: 82237">
     </div>
   </div>
 
@@ -625,7 +643,14 @@
     </div>
     <div class="field-group">
       <label for="nome-ajudante">Nome do Ajudante</label>
-      <input type="text" id="nome-ajudante" placeholder="Nome completo (se houver)">
+      <input type="text" id="nome-ajudante" placeholder="Selecione ou digite o nome" list="lista-ajudantes" autocomplete="off">
+      <datalist id="lista-ajudantes">
+        <option value="PAULO ROGERIO DE SOUZA BENTO">
+        <option value="CLAYTON OLIVEIRA DE JESUS">
+        <option value="ALEXANDER JUNIOR HENRIQUE">
+        <option value="GABRIEL IREU BRAZÃO MOREIRA">
+        <option value="JESSÉ DE JESUS VIEIRA">
+      </datalist>
     </div>
   </div>
   <div class="grid-2" style="margin-bottom:24px">
@@ -659,6 +684,7 @@
       <div class="res-item"><label>Data</label><div class="val" id="res-data">—</div></div>
       <div class="res-item"><label>Placa / Veículo</label><div class="val" id="res-veiculo">—</div></div>
       <div class="res-item"><label>Km Percorrida</label><div class="val" id="res-km">—</div></div>
+      <div class="res-item"><label>Nº da Carga</label><div class="val" id="res-num-carga">—</div></div>
       <div class="res-item"><label>Rota</label><div class="val" id="res-rota">—</div></div>
       <div class="res-item"><label>Destino</label><div class="val" id="res-destino">—</div></div>
       <div class="res-item"><label>Peso</label><div class="val" id="res-peso">—</div></div>
@@ -890,6 +916,7 @@ function calcularFrete() {
   const motorista = document.getElementById('motorista').value.trim();
   const placa = document.getElementById('placa').value.trim();
   const km = document.getElementById('km').value;
+  const numCarga = document.getElementById('num-carga').value.trim();
   const modelo = document.getElementById('modelo').value.trim();
   const rotaIdx = document.getElementById('rota').value;
   const peso = parseFloat(document.getElementById('peso').value);
@@ -930,6 +957,7 @@ function calcularFrete() {
   document.getElementById('res-data').textContent = formatarData(data);
   document.getElementById('res-veiculo').textContent = `${placa.toUpperCase()}${modelo ? ' – ' + modelo : ''}`;
   document.getElementById('res-km').textContent = km ? `${parseFloat(km).toLocaleString('pt-BR')} km` : '—';
+  document.getElementById('res-num-carga').textContent = numCarga || '—';
   document.getElementById('res-combustivel').textContent = combustivel ? `R$ ${combustivel.toLocaleString('pt-BR', {minimumFractionDigits:2})}` : 'R$ 0,00';
   document.getElementById('res-pedagio').textContent = pedagio ? `R$ ${pedagio.toLocaleString('pt-BR', {minimumFractionDigits:2})}` : 'R$ 0,00';
   document.getElementById('res-valor-motorista').textContent = valorMotorista ? `R$ ${valorMotorista.toLocaleString('pt-BR', {minimumFractionDigits:2})}` : 'R$ 0,00';
@@ -998,6 +1026,7 @@ function calcularFrete() {
     placa: placa.toUpperCase(),
     modelo,
     km: km || '',
+    numCarga,
     rota: item.rota,
     destino: item.destino,
     peso,
@@ -1016,7 +1045,7 @@ function calcularFrete() {
 }
 
 function limparForm() {
-  ['motorista','placa','modelo','km','combustivel','pedagio','valor-motorista','nome-ajudante','valor-adicional','motivo-adicional','observacoes','peso','data'].forEach(id => {
+  ['motorista','placa','modelo','km','num-carga','combustivel','pedagio','valor-motorista','nome-ajudante','valor-adicional','motivo-adicional','observacoes','peso','data'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('rota').value = '';
@@ -1049,28 +1078,30 @@ async function enviarParaSheets() {
 
   const d = window._dadosParaEnviar;
   const params = new URLSearchParams({
-    data:           d.data,
-    motorista:      d.motorista,
-    placa:          d.placa,
-    modelo:         d.modelo,
-    km:             d.km,
-    rota:           d.rota,
-    destino:        d.destino,
-    peso:           d.peso,
-    faixa:          d.faixa,
-    valorFrete:     d.valorFrete,
-    combustivel:    d.combustivel,
-    pedagio:        d.pedagio,
-    valorMotorista: d.valorMotorista,
-    nomeAjudante:   d.nomeAjudante,
-    valorAdicional: d.valorAdicional,
-    motivoAdicional:d.motivoAdicional,
-    observacoes:    d.observacoes,
-    totalCustos:    d.totalCustos
+    data:            d.data,
+    motorista:       d.motorista,
+    placa:           d.placa,
+    modelo:          d.modelo,
+    km:              d.km,
+    numCarga:        d.numCarga,
+    rota:            d.rota,
+    destino:         d.destino,
+    peso:            d.peso,
+    faixa:           d.faixa,
+    valorFrete:      d.valorFrete,
+    combustivel:     d.combustivel,
+    pedagio:         d.pedagio,
+    valorMotorista:  d.valorMotorista,
+    nomeAjudante:    d.nomeAjudante,
+    valorAdicional:  d.valorAdicional,
+    motivoAdicional: d.motivoAdicional,
+    observacoes:     d.observacoes,
+    totalCustos:     d.totalCustos,
+    lucro:           d.lucro
   });
 
   try {
-    const resp = await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
+    await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
     mostrarStatus('sucesso', '✅ Dados salvos na planilha com sucesso!');
     btn.textContent = '✓ Salvo!';
     btn.style.background = '#2e7d32';
@@ -1087,12 +1118,58 @@ function mostrarStatus(tipo, msg) {
   el.className = 'envio-status ' + tipo;
 }
 
+// =============================================
+// LISTAS DINÂMICAS — placa e modelo
+// Salvas diretamente no arquivo HTML (permanente)
+// =============================================
+
+// Edite estas listas diretamente aqui para adicionar/remover entradas:
+const PLACAS = [
+  'DFV0H54',
+  'FYR5D43',
+  'KZA4B11',
+  'NLF0C44'
+];
+
+const MODELOS = [
+  'RENAULT TRAFIC 2001',
+  'GM MONTANA 2018',
+  'RENAULT MASTER 2013',
+  'RENAULT MASTER 2009'
+];
+
+function preencherDatalist(datalistId, lista) {
+  const dl = document.getElementById(datalistId);
+  dl.innerHTML = '';
+  lista.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    dl.appendChild(opt);
+  });
+}
+
+// Mapa placa → modelo
+const PLACA_MODELO = {
+  'DFV0H54':  'RENAULT TRAFIC 2001',
+  'FYR5D43':  'GM MONTANA 2018',
+  'KZA4B11':  'RENAULT MASTER 2013',
+  'NLF0C44':  'RENAULT MASTER 2009',
+};
+
+function preencherModeloPorPlaca(placa) {
+  const modelo = PLACA_MODELO[placa.trim().toUpperCase()];
+  if (modelo) {
+    document.getElementById('modelo').value = modelo;
+  }
+}
+
 // Init
 window.onload = () => {
   document.getElementById('data').value = new Date().toISOString().split('T')[0];
   preencherRotas();
-  // esconder segunda saída inicialmente (tabela vale)
   document.getElementById('segunda-saida').parentElement.style.display = 'none';
+  preencherDatalist('lista-placas', PLACAS);
+  preencherDatalist('lista-modelos', MODELOS);
 };
 </script>
 </body>
